@@ -5,16 +5,12 @@ include 'includes/header.php';
 
 echo '<h3>Sign in</h3><br />';
 
-//first, check if the user is already signed in. If that is the case, there is no need to display this page
-if (isset($_SESSION['signed_in']) && $_SESSION['signed_in'] == true) {
-    echo 'You are already signed in, you can <a href="signout.php">sign out</a> if you want.';
-} 
-else if (isset($_POST['ot_pass_gen'])) {
-    // 	echo "button 1 has been pressed"; 
-    //     redirect_to("./otp/index.php");
+$outputLabelText = '';
+
+if (isset($_POST['ot_pass_gen'])) {
     
-    if (!isset($_POST['user_name'])) {
-        echo 'The username field must not be empty.';
+    if (!isset($_POST['user_name']) || mysql_real_escape_string($_POST['user_name']) == '') {
+        $outputLabelText = 'The username field must not be empty.';
     } else {
         
         $sql = "SELECT 
@@ -66,7 +62,7 @@ else if (isset($_POST['ot_pass_gen'])) {
                 $mail = $smtp->send($to, $headers, $message);
                 
                 if (PEAR::isError($mail)) {
-                    echo ('<p>' . $mail->getMessage() . '</p>');
+                    $outputLabelText = ('<p>' . $mail->getMessage() . '</p>');
                 } else {
                     //   echo('<p>Message successfully sent!</p>');
                     
@@ -82,7 +78,7 @@ else if (isset($_POST['ot_pass_gen'])) {
                 
                 $otp_result = mysql_query($sql);
                 if (!$otp_result) {
-                    echo ('<p>Returned no results when checking for preexisting otp!</p>');
+                    $outputLabelText = ('<p>Returned no results when checking for preexisting otp!</p>');
                 } else {
                     
                     $otp_row = mysql_fetch_assoc($otp_result);
@@ -95,7 +91,7 @@ else if (isset($_POST['ot_pass_gen'])) {
 								WHERE user_name = '" . mysql_real_escape_string($_POST['user_name']) . "'";
                         
                         $result = mysql_query($sql);
-                        echo ('<p>Check your email and hit the back button to enter the updated otp!</p>');
+                        $outputLabelText = ('<p>Check your email!</p>');
 
                         
                     }
@@ -110,7 +106,7 @@ else if (isset($_POST['ot_pass_gen'])) {
 		                        $result = mysql_query($sql);
 
 		
-                        echo ('<p>Created otp, check your email and hit the back button to enter it!</p>');
+                        $outputLabelText = ('<p>Check your email!</p>');
 
 
                     }
@@ -119,32 +115,20 @@ else if (isset($_POST['ot_pass_gen'])) {
                 }
             } 
             else if (count($row) > 1) {
-                echo ('<p>Too many results returned!</p>');
+                $outputLabelText = ('<p>Too many results returned!</p>');
                 
             }
             else  {
-                echo ('<p>No email results returned!</p>');
+                $outputLabelText = ('<p>No email results returned!</p>');
                 
             }
         }
     }
-    
-    
 }
 
-else {
-    if ($_SERVER['REQUEST_METHOD'] != 'POST') {
-        /*the form hasn't been posted yet, display it
-        note that the action="" will cause the form to post to the same page it is on */
-        echo '<form method="post" action="">
-Username: <input type="text" name="user_name" /><br />
-<input type="submit" name="ot_pass_gen" value="Email me one-time-password" /><br /><br />
-Password: <input type="password" name="user_pass"><br />
-One Time Password: <input type="password" name="ot_pass"><br />
-<input type="submit" name="sign_in" value="Sign in" />
-</form>';
-    } else {
-        /* so, the form has been posted, we'll process the data in three steps:
+else if (isset($_POST['sign_in'])) {
+
+ /* so, the form has been posted, we'll process the data in three steps:
         1.	Check the data
         2.	Let the user refill the wrong fields (if necessary)
         3.	Varify if the data is correct and return the correct response
@@ -244,8 +228,43 @@ otp_pass = '" . $_POST['ot_pass'] . "'";
                 }
             }
         }
-    }
+
 }
+
+//first, check if the user is already signed in. If that is the case, there is no need to display this page
+if (isset($_SESSION['signed_in']) && $_SESSION['signed_in'] == true) {
+    echo 'You are already signed in, you can <a href="signout.php">sign out</a> if you want.';
+} 
+else {
+//    if ($_SERVER['REQUEST_METHOD'] != 'POST') {
+        /*the form hasn't been posted yet, display it
+        note that the action="" will cause the form to post to the same page it is on */
+        
+        if (isset($_POST['user_name'])) {
+        
+        echo '<form method="post" action="">
+Username: <input type="text" name="user_name" value="'.mysql_real_escape_string($_POST['user_name']).'"/><br />
+<input type="submit" name="ot_pass_gen" value="Email me one-time-password" /><br /><br />
+Password: <input type="password" name="user_pass"><br />
+One Time Password: <input type="password" name="ot_pass"><br />
+<input type="submit" name="sign_in" value="Sign in" /><br /><br />
+<label>'.$outputLabelText.'</label>
+</form>';
+}
+else {
+        echo '<form method="post" action="">
+Username: <input type="text" name="user_name" /><br />
+<input type="submit" name="ot_pass_gen" value="Email me one-time-password" /><br /><br />
+Password: <input type="password" name="user_pass"><br />
+One Time Password: <input type="password" name="ot_pass"><br />
+<input type="submit" name="sign_in" value="Sign in" /><br /><br />
+<label>'.$outputLabelText.'</label>
+</form>';
+
+//    } 
+}
+}
+
 
 include 'includes/footer.php';
 ?>
