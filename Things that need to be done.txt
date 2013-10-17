@@ -1,0 +1,5 @@
+Sign in button should change to sign out when user signs in
+Sign out button should change to sign in when user signs out
+Remove the "Create a category" button when the user is not an admin
+Give the OTP a timeout
+Remove the "Created for NetTuts+" 
