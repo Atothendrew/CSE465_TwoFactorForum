@@ -1,7 +1,7 @@
 <?php
 //category.php
 include 'includes/connect.php';
-include 'header.php';
+include 'includes/header.php';
 
 //first select the category based on $_GET['cat_id']
 $sql = "SELECT
