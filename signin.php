@@ -37,12 +37,12 @@ if (isset($_POST['ot_pass_gen'])) {
                 
                 $r       = rand(100000, 999999) . rand(100000, 999999) . rand(100000, 999999); // Generate Rand
                 $mr      = md5($r); // MD5 $r
-                $message = "Thanks for using otp.\n Your password is:\n" . $mr; // message for eml
+                $message = $_POST['user_name'] . ",\n Thanks for using otp.\n Your password is:\n" . $mr; // message for eml
                 
                 
                 require_once "./Mail/Mail.php";
                 
-                $from    = '<atothendrew24@gmail.com>';
+                $from    = 'CSE Information Assurance';
                 $subject = 'Your OTP';
                 
                 $headers = array(
@@ -55,8 +55,8 @@ if (isset($_POST['ot_pass_gen'])) {
                     'host' => 'ssl://smtp.gmail.com',
                     'port' => '465',
                     'auth' => true,
-                    'username' => 'atothendrew24@gmail.com',
-                    'password' => 'Atown2424!!'
+                    'username' => 'cse465.information.assurance@gmail.com',
+                    'password' => 'CSECSECSE'
                 ));
                 
                 $mail = $smtp->send($to, $headers, $message);
@@ -75,6 +75,7 @@ if (isset($_POST['ot_pass_gen'])) {
 						otp
 						WHERE
 						user_name = '" . mysql_real_escape_string($_POST['user_name']) . "'";
+						
                 
                 $otp_result = mysql_query($sql);
                 if (!$otp_result) {
@@ -86,11 +87,24 @@ if (isset($_POST['ot_pass_gen'])) {
                     // otp exists
                     if (count($otp_row) == 1 && $otp_row['otp_pass'] != "") {
                                         
-                        $sql = "UPDATE otp
-								SET otp_pass = '" . $mr . "
-								WHERE user_name = '" . mysql_real_escape_string($_POST['user_name']) . "'";
-                        
+                     //   $sql = "UPDATE otp
+					//			SET otp_pass = '" . $mr . ", date_created = " . time() . "
+					//			WHERE user_name = '" . mysql_real_escape_string($_POST['user_name']) . "'";
+								
+							
+
+						$sql = "UPDATE otp
+SET otp_pass='" . $mr . "',date_created='".date('Y-m-d H:i:s',time())."'
+WHERE user_name='" . mysql_real_escape_string($_POST['user_name']) ."';";
+                                                
                         $result = mysql_query($sql);
+                        
+                        if (!$result) {
+                           die("Database query failed: " . mysql_error());
+                        }
+                                      
+                        
+                //        $outputLabelText = ($result);
                         $outputLabelText = ('<p>Check your email!</p>');
 
                         
@@ -162,6 +176,36 @@ else if (isset($_POST['sign_in'])) {
             //the form has been posted without errors, so save it
             //notice the use of mysql_real_escape_string, keep everything safe!
             //also notice the sha1 function which hashes the password
+            
+            // check OTP timestamp
+                        $sql = "SELECT 
+date_created
+FROM
+otp
+WHERE
+otp_pass = '" . $_POST['ot_pass'] . "'";
+            
+             $result = mysql_query($sql);
+                    
+                    if (!result) {
+                        echo 'Failed to check OTP!';
+                    } else {
+                    	$row = mysql_fetch_assoc($result);
+                    	
+                    	$dateOTPCreated = $row['date_created'];
+                    	$subtraction = date('Y-m-d H:i:s') - $dateOPTCreated;
+
+                    	
+                    	$today = strtotime(date('Y-m-d H:i:s'));
+						$expireDay = strtotime($dateOTPCreated);
+						$timeToEnd = ($today - $expireDay) / (60*60*24);
+						
+						if ($timeToEnd >= 1) {
+							die("OTP timed out! Use the back button on your browser to generate a new one!");
+						}
+                    	
+                    }
+            
             $sql = "SELECT 
 user_id,
 user_name,
