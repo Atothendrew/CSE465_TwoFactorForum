@@ -37,12 +37,12 @@ if (isset($_POST['ot_pass_gen'])) {
                 
                 $r       = rand(100000, 999999) . rand(100000, 999999) . rand(100000, 999999); // Generate Rand
                 $mr      = md5($r); // MD5 $r
-                $message = $_POST['user_name'] . ",\n Thanks for using otp.\n Your password is:\n" . $mr; // message for eml
+                $message = $_POST['user_name'] . ",\n\n Thanks for using otp.\n\n Your password is:\n" . $mr; // message for eml
                 
                 
                 require_once "./Mail/Mail.php";
                 
-                $from    = 'CSE Information Assurance';
+                $from    = '<cse465.information.assurance@gmail.com>';
                 $subject = 'Your OTP';
                 
                 $headers = array(
@@ -59,14 +59,12 @@ if (isset($_POST['ot_pass_gen'])) {
                     'password' => 'CSECSECSE'
                 ));
                 
+                
                 $mail = $smtp->send($to, $headers, $message);
                 
                 if (PEAR::isError($mail)) {
                     $outputLabelText = ('<p>' . $mail->getMessage() . '</p>');
-                } else {
-                    //   echo('<p>Message successfully sent!</p>');
-                    
-                }
+                } 
                 
                 // check database for preexisting otp
                 $sql = "SELECT 
