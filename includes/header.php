@@ -17,9 +17,20 @@
 	<h2>Group #9 Forum</h2>
 	<div id="wrapper">
 	<div id="menu">
-		<a class="item" href="index.php">Home</a> -
-		<a class="item" href="create_topic.php">Create a topic</a> -
-		<a class="item" href="create_cat.php">Create a category</a>
+		<a class="item" href="index.php">Home</a>
+		
+		<?php
+		if($_SESSION['signed_in'])
+		{
+			echo '- <a class="item" href="create_topic.php">Create a topic</a> ';
+
+			if ($_SESSION['user_level'] == 1)
+			{
+				echo '- <a class="item" href="create_cat.php">Create a category</a>';
+			}
+		}
+		?>
+		
 		
 		<div id="userbar">
 		<?php
