@@ -1,5 +1,5 @@
 <?php
-//signin.php
+
 include 'includes/connect.php';
 
 $outputLabelText = '';
@@ -34,33 +34,35 @@ if (isset($_POST['ot_pass_gen'])) {
                 $r       = rand(100000, 999999) . rand(100000, 999999) . rand(100000, 999999); // Generate Rand
                 $mr      = md5($r); // MD5 $r
                 $message = $_POST['user_name'] . ",\n\n Thanks for using otp.\n\n Your password is:\n" . $mr; // message for eml
+            
                 
+                require 'PHPMailerAutoload.php';
                 
-                require_once "./Mail/Mail.php";
+                $mail = new PHPMailer;
+
+$mail->isSMTP();                                      // Set mailer to use SMTP
+$mail->Host = 'smtp.gmail.com';  // Specify main and backup server
+$mail->SMTPAuth = true;                               // Enable SMTP authentication
+$mail->Username = 'cse465.information.assurance@gmail.com';  // SMTP username
+$mail->Password = 'CSECSECSE';                           // SMTP password
+$mail->SMTPSecure = 'tls';                            // Enable encryption, 'ssl' also accepted
+
+$mail->From = 'cse465.information.assurance@gmail.com';
+$mail->FromName = 'CSE 465 Group 9';
+$mail->addAddress($row['user_email']);  // Add a recipient
+$mail->addReplyTo('cse465.information.assurance@gmail.com', 'Reply To');
+
+$mail->WordWrap = 50;                                 // Set word wrap to 50 characters
+
+$mail->Subject = 'Your OTP';
+$mail->Body    = $_POST['user_name'] . ",\n\n Thanks for using otp.\n\n Your password is:\n" . $mr;
+
+if(!$mail->send()) {
+   echo 'Message could not be sent.';
+   echo 'Mailer Error: ' . $mail->ErrorInfo;
+   exit;
+}
                 
-                $from    = '<cse465.information.assurance@gmail.com>';
-                $subject = 'Your OTP';
-                
-                $headers = array(
-                    'From' => $from,
-                    'To' => $to,
-                    'Subject' => $subject
-                );
-                
-                $smtp = Mail::factory('smtp', array(
-                    'host' => 'ssl://smtp.gmail.com',
-                    'port' => '465',
-                    'auth' => true,
-                    'username' => 'cse465.information.assurance@gmail.com',
-                    'password' => 'CSECSECSE'
-                ));
-                
-                
-                $mail = $smtp->send($to, $headers, $message);
-                
-                if (PEAR::isError($mail)) {
-                    $outputLabelText = ('<p>' . $mail->getMessage() . '</p>');
-                }
                 
                 // check database for preexisting otp
                 $sql = "SELECT 
