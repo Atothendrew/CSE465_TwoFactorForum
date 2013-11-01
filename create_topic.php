@@ -7,13 +7,14 @@ echo '<h2>Create a topic</h2>';
 if($_SESSION['signed_in'] == false)
 {
 	//the user is not signed in
-	echo 'Sorry, you have to be <a href="/forum/signin.php">signed in</a> to create a topic.';
+	echo 'Sorry, you have to be <a href="signin.php">signed in</a> to create a topic.';
 }
 else
 {
 	//the user is signed in
 	if($_SERVER['REQUEST_METHOD'] != 'POST')
-	{	
+	{
+
 		//the form hasn't been posted yet, display it
 		//retrieve the categories from the database for use in the dropdown
 		$sql = "SELECT
@@ -22,9 +23,9 @@ else
 					cat_description
 				FROM
 					categories";
-		
+
 		$result = mysql_query($sql);
-		
+
 		if(!$result)
 		{
 			//the query failed, uh-oh :-(
@@ -46,18 +47,18 @@ else
 			}
 			else
 			{
-		
+
 				echo '<form method="post" action="">
 					Subject: <input type="text" name="topic_subject" /><br />
-					Category:'; 
-				
+					Category:';
+
 				echo '<select name="topic_cat">';
-					while($row = mysql_fetch_assoc($result))
-					{
-						echo '<option value="' . $row['cat_id'] . '">' . $row['cat_name'] . '</option>';
-					}
-				echo '</select><br />';	
-					
+				while($row = mysql_fetch_assoc($result))
+				{
+					echo '<option value="' . $row['cat_id'] . '">' . $row['cat_name'] . '</option>';
+				}
+				echo '</select><br />';
+
 				echo 'Message: <br /><textarea name="post_content" /></textarea><br /><br />
 					<input type="submit" value="Create topic" />
 				 </form>';
@@ -66,21 +67,59 @@ else
 	}
 	else
 	{
-		//start the transaction
-		$query  = "BEGIN WORK;";
-		$result = mysql_query($query);
-		
-		if(!$result)
-		{
-			//Damn! the query failed, quit
-			echo 'An error occured while creating your topic. Please try again later.';
+
+		if (empty($_POST['topic_subject'])) {
+			echo 'Your post subject cannot be empty!';
 		}
-		else
-		{
-	
-			//the form has been posted, so save it
-			//insert the topic into the topics table first, then we'll save the post into the posts table
-			$sql = "INSERT INTO 
+		else if (empty($_POST['post_content'])) {
+				echo 'Your post content cannot be empty!';
+		}
+		else if (strlen($_POST['post_content']) > 800) {
+			echo 'Your post content length ('.strlen($_POST['post_content']).') exceeds 800 characters. It cannot exceed 800 characters.';
+		}
+		else if (strlen($_POST['topic_subject']) > 80) {
+			echo 'Your post subject length ('.strlen($_POST['topic_subject']).') exceeds 80 characters. It cannot exceed 80 characters.';
+		}
+		else {
+
+			// Check post message for invalid chars
+			$badChars = array ('<', '>', '*', '%', '/');
+			$contentToBeAdded = $_POST['post_content'];
+			$postContentHasBadChar = false;
+
+			foreach ($badChars as $char) {
+				if (strpos($contentToBeAdded,strval($char)) !== false) {
+					$$postContentHasBadChar = true;
+				}
+			}
+
+			// Check post subject for invalid chars
+			$contentToBeAdded = $_POST['topic_subject'];
+			$postSubjectHasBadChar = false;
+
+			foreach ($badChars as $char) {
+				if (strpos($contentToBeAdded,strval($char)) !== false) {
+					$postSubjectHasBadChar = true;
+				}
+			}
+
+			if (!$postContentHasBadChar && !$postSubjectHasBadChar) {
+
+				//start the transaction
+				$query  = "BEGIN WORK;";
+				$result = mysql_query($query);
+
+				if(!$result)
+				{
+					//Damn! the query failed, quit
+					echo 'An error occured while creating your topic. Please try again later.';
+				}
+				else
+				{
+
+					//the form has been posted, so save it
+					//insert the topic into the topics table first, then we'll save the post into the posts table
+					$sql = "INSERT INTO
 						topics(topic_subject,
 							   topic_date,
 							   topic_cat,
@@ -90,22 +129,22 @@ else
 							   '" . mysql_real_escape_string($_POST['topic_cat']) . "',
 							   '" . $_SESSION['user_id'] . "'
 							   )";
-					 
-			$result = mysql_query($sql);
-			if(!$result)
-			{
-				//something went wrong, display the error
-				echo 'An error occured while inserting your data during the first query. Please try again later.<br /><br />' . mysql_error();
-				$sql = "ROLLBACK;";
-				$result = mysql_query($sql);
-			}
-			else
-			{
-				//the first query worked, now start the second, posts query
-				//retrieve the id of the freshly created topic for usage in the posts query
-				$topicid = mysql_insert_id();
-				
-				$sql = "INSERT INTO
+
+					$result = mysql_query($sql);
+					if(!$result)
+					{
+						//something went wrong, display the error
+						echo 'An error occured while inserting your data during the first query. Please try again later.<br /><br />' . mysql_error();
+						$sql = "ROLLBACK;";
+						$result = mysql_query($sql);
+					}
+					else
+					{
+						//the first query worked, now start the second, posts query
+						//retrieve the id of the freshly created topic for usage in the posts query
+						$topicid = mysql_insert_id();
+
+						$sql = "INSERT INTO
 							posts(post_content,
 								  post_date,
 								  post_topic,
@@ -116,23 +155,31 @@ else
 								  " . $topicid . ",
 								  " . $_SESSION['user_id'] . "
 							)";
-				$result = mysql_query($sql);
-				
-				if(!$result)
-				{
-					//something went wrong, display the error
-					echo 'An error occured while inserting your post during the second query. Please try again later.<br /><br />' . mysql_error();
-					$sql = "ROLLBACK;";
-					$result = mysql_query($sql);
+						$result = mysql_query($sql);
+
+						if(!$result)
+						{
+							//something went wrong, display the error
+							echo 'An error occured while inserting your post during the second query. Please try again later.<br /><br />' . mysql_error();
+							$sql = "ROLLBACK;";
+							$result = mysql_query($sql);
+						}
+						else
+						{
+							$sql = "COMMIT;";
+							$result = mysql_query($sql);
+
+							//after a lot of work, the query succeeded!
+							echo 'You have succesfully created <a href="topic.php?id='. $topicid . '">your new topic</a>.';
+						}
+					}
 				}
-				else
-				{
-					$sql = "COMMIT;";
-					$result = mysql_query($sql);
-					
-					//after a lot of work, the query succeeded!
-					echo 'You have succesfully created <a href="topic.php?id='. $topicid . '">your new topic</a>.';
+			}
+			else if ($postContentHasBadChar) {
+					echo 'Your topic message contains one or more of the following invalid characters: (<, >, *, %, /). For security reasons, we cannot post your reply. Please remove the characters and try again.';
 				}
+			else {
+				echo 'Your topic subject contains one or more of the following invalid characters: (<, >, *, %, /). For security reasons, we cannot post your reply. Please remove the characters and try again.';
 			}
 		}
 	}

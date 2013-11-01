@@ -23,19 +23,29 @@ else
 	}
 	else
 	{
-		//the form has been posted, so save it
-		$sql = "INSERT INTO categories(cat_name, cat_description)
+
+		if (empty($_POST['cat_name'])) {
+			echo 'Your category name cannot be empty!';
+		}
+		else if (empty($_POST['cat_description'])) {
+				echo 'Your category description cannot be empty!';
+			}
+		else {
+
+			//the form has been posted, so save it
+			$sql = "INSERT INTO categories(cat_name, cat_description)
 		   VALUES('" . mysql_real_escape_string($_POST['cat_name']) . "',
 				 '" . mysql_real_escape_string($_POST['cat_description']) . "')";
-		$result = mysql_query($sql);
-		if(!$result)
-		{
-			//something went wrong, display the error
-			echo 'Error' . mysql_error();
-		}
-		else
-		{
-			echo 'New category succesfully added.';
+			$result = mysql_query($sql);
+			if(!$result)
+			{
+				//something went wrong, display the error
+				echo 'Error' . mysql_error();
+			}
+			else
+			{
+				echo 'New category successfully added.';
+			}
 		}
 	}
 }

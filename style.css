@@ -91,12 +91,13 @@ h3 {margin: 0; padding: 0;}
 
 /* Menu styles */
 .item {
-	background-color: #B8B8B8;
+/*	background-color: #B8B8B8; */
 	border: 1px solid #032472;
 	color: black;
 	font-family: Arial;
 	padding: 3px;
 	text-decoration: none;
+	position: relative;
 }
 
 .leftpart {
@@ -122,6 +123,7 @@ h3 {margin: 0; padding: 0;}
 }
 
 .post-content {
+	word-wrap: break-word;
 	padding: 30px;
 }
 
